@@ -11,7 +11,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.sql.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
@@ -58,7 +57,7 @@ public class MyHttpServer {
 
         }
     }
-    
+
     private void runServer(int porta) throws IOException {
         System.out.println("Iniciando o servidor MyHttpServer");
         HttpServer server = HttpServer.create(new InetSocketAddress(porta), 0);
