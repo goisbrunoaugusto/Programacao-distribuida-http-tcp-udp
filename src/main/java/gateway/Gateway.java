@@ -22,12 +22,10 @@ public class Gateway {
 
     public void forwardMessage(HttpExchange exchange) throws Exception{
 
-        System.out.println("Mensagem recebida pelo gateway");
-
         int serverIndex = requestCounter .getAndIncrement() % SERVERS.length;
         String serverUrl = SERVERS[serverIndex];
 
-        if(exchange.getRequestMethod().equals("POST")){
+        if(exchange.getRequestMethod().equalsIgnoreCase("POST")){
             InputStream is = exchange.getRequestBody();
             Scanner scanner = new Scanner(is);
             String data = scanner.nextLine();
@@ -36,35 +34,31 @@ public class Gateway {
                     .uri(URI.create(SERVERS[0] + "/post"))
                     .POST(HttpRequest.BodyPublishers.ofString(data))
                     .build();
-            HttpResponse<String> result = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            exchange.sendResponseHeaders(result.statusCode(), result.body().getBytes().length);
-            OutputStream os = exchange.getResponseBody();
-            os.write(result.body().getBytes());
-            os.close();
+            sendRequestandResponse(exchange, request);
 
 
-        } else if (exchange.getRequestMethod().equals("GET")) {
-            System.out.println("Entrou no if do GET");
+        } else if (exchange.getRequestMethod().equalsIgnoreCase("GET")) {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(SERVERS[0] + "/get"))
                     .GET()
                     .build();
-            HttpResponse<String> result = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-            exchange.sendResponseHeaders(result.statusCode(), result.body().getBytes().length);
-            OutputStream os = exchange.getResponseBody();
-            os.write(result.body().getBytes());
-            os.close();
+            sendRequestandResponse(exchange, request);
 
         }else {
-            System.out.println("Entrou no else, ERRO 400");
-            String response = "Método errado";
+            String response = "Método não suportado";
             int statusCode = 400;
             exchange.sendResponseHeaders(statusCode, response.getBytes().length);
             OutputStream os = exchange.getResponseBody();
             os.write(response.getBytes());
             os.close();
         }
+    }
+
+    private void sendRequestandResponse(HttpExchange exchange, HttpRequest request) throws java.io.IOException, InterruptedException {
+        HttpResponse<String> result = client.send(request, HttpResponse.BodyHandlers.ofString());
+        exchange.sendResponseHeaders(result.statusCode(), result.body().getBytes().length);
+        OutputStream os = exchange.getResponseBody();
+        os.write(result.body().getBytes());
+        os.close();
     }
 }

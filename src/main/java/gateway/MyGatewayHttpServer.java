@@ -17,7 +17,6 @@ public class MyGatewayHttpServer {
         public void handle(HttpExchange exchange) throws IOException {
 
             try {
-                System.out.println("Enviando mensagem do servidorGateway para o gateway");
                 gateway.forwardMessage(exchange);
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -27,12 +26,11 @@ public class MyGatewayHttpServer {
     }
 
     private void runServer() throws IOException {
-        System.out.println("Starting Gateway Server");
+        System.out.println("Iniciando Gateway Server");
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
         HttpContext context = server.createContext("/", new RequestHandler());
         server.start();
     }
-
 
     public static void main(String[] args) {
         try{
