@@ -3,7 +3,6 @@ package udp;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.Socket;
 import java.net.SocketException;
 import java.sql.SQLException;
 import java.util.logging.Logger;
@@ -26,6 +25,8 @@ public class UdpServer {
             }
         }catch (IOException e){
             logger.warning("Erro ao enviar mensagem");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 

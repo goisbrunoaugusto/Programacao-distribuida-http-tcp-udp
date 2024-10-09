@@ -1,13 +1,17 @@
 package udp;
 
+import database.DatabasePersistance;
+
 import java.net.DatagramPacket;
+import java.sql.SQLException;
 import java.util.logging.Logger;
 
 public class MessageHandler implements Runnable{
     private static final Logger logger = Logger.getLogger(MessageHandler.class.getName());
     private final DatagramPacket packet;
+    private final DatabasePersistance db = new DatabasePersistance();
 
-    public MessageHandler(DatagramPacket packet) {
+    public MessageHandler(DatagramPacket packet) throws SQLException {
         this.packet = packet;
     }
 
@@ -28,13 +32,14 @@ public class MessageHandler implements Runnable{
                 for (int i = 1; i < lines.length; i++) {
                     messageBody.append(lines[i]).append("\n");
                 }
-                logger.info("#### Corpo da mensagem #####" + messageBody.toString());
+                db.postMessage(String.valueOf(messageBody));
+                logger.info("#### Corpo da mensagem ##### " + messageBody.toString());
 
             } else {
-                System.out.println("Recebida uma mensagem desconhecida.");
+                logger.info("Recebida uma mensagem desconhecida.");
             }
         } else {
-            System.out.println("Mensagem vazia recebida.");
+            logger.info("Mensagem vazia recebida.");
         }
 
     }
