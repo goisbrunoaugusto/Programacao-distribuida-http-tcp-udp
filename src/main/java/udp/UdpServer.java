@@ -11,13 +11,12 @@ public class UdpServer {
     private static final Logger logger = Logger.getLogger(UdpServer.class.getName());
 
     public static void udpServer(String port) throws SocketException {
-        logger.info("##### Servidor iniciado na porta: " + port + " #####");
         DatagramSocket serverSocket = new DatagramSocket(Integer.parseInt(port));
+        logger.info("##### Servidor iniciado na porta: " + port + " #####");
 
         try {
             while (true) {
                 byte[] buffer = new byte[1024];
-                logger.info("Entrou no loop infinito");
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 serverSocket.receive(packet);
                 logger.info("Pacote recebido pelo servidor udp, enviando para o MessageHandler...");

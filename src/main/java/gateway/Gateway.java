@@ -2,8 +2,10 @@ package gateway;
 
 import com.sun.net.httpserver.HttpExchange;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.InputStream;
+import java.net.DatagramPacket;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -20,9 +22,9 @@ public class Gateway {
     private AtomicInteger requestCounter = new AtomicInteger(0);
     private HttpClient client = HttpClient.newHttpClient();
 
-    public void forwardMessage(HttpExchange exchange) throws Exception{
+    public void forwardMessage(HttpExchange exchange) throws IOException, InterruptedException {
 
-        int serverIndex = requestCounter .getAndIncrement() % SERVERS.length;
+        int serverIndex = requestCounter.getAndIncrement() % SERVERS.length;
         String serverUrl = SERVERS[serverIndex];
 
         if(exchange.getRequestMethod().equalsIgnoreCase("POST")){
