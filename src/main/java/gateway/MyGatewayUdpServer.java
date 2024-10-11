@@ -21,6 +21,7 @@ public class MyGatewayUdpServer {
     private static void udpGateway() throws SocketException {
         DatagramSocket socket = new DatagramSocket(8081);
         logger.info("#### Servidor iniciado na porta: " + socket.getLocalPort() + "####");
+
         int serverIndex = requestCounter.getAndIncrement() % SERVERS.length;
         String address = SERVERS[serverIndex];
         int port = PORTS[serverIndex];
@@ -30,11 +31,25 @@ public class MyGatewayUdpServer {
                 byte[] buffer = new byte[1024];
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
-                logger.info("Pacote recebido pelo gateway udp, enviando para o servidor...");
-                System.out.println("Endereço do pacote recebido: " + packet.getAddress());
-                DatagramPacket response = new DatagramPacket(packet.getData(),
-                        packet.getLength(), InetAddress.getByName(address), port);
-                socket.send(response);
+
+                String receivedMessage = new String(packet.getData(), 0, packet.getLength());
+                String[] lines = receivedMessage.split("\n");
+
+                if(lines[1].trim().equalsIgnoreCase("POST") ||
+                        lines[1].trim().equalsIgnoreCase("GET")){
+
+                    logger.info("Pacote recebido pelo gateway udp, enviando para o servidor...");
+                    DatagramPacket toServer = new DatagramPacket(packet.getData(),
+                            packet.getLength(), InetAddress.getByName(address), port);
+                    socket.send(toServer);
+
+                    String clientResponse = "Mensagem recebida";
+                    DatagramPacket toCLient = new DatagramPacket(clientResponse.getBytes(), clientResponse.getBytes().length,
+                            packet.getAddress(), packet.getPort());
+                    String clientMessage = new String(toCLient.getData(), 0, toCLient.getLength());
+                    logger.info("Pacote recebido pelo gateway udp, enviando para o cliente:: " + clientMessage);
+                    socket.send(toCLient);
+                }
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
