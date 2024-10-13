@@ -20,6 +20,7 @@ public class DatabasePersistance {
             while (rs.next()) {
                 messages.add(rs.getString("conteudo"));
             }
+            System.out.println(messages);
             return messages;
         } catch (SQLException e) {
             throw new RuntimeException("Erro ao buscar os mensagens", e);

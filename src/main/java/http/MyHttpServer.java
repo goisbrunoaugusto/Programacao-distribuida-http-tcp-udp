@@ -54,7 +54,6 @@ public class MyHttpServer {
             os.write(response.getBytes());
             os.close();
 
-
         }
     }
 
