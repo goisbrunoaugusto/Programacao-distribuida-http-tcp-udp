@@ -26,7 +26,6 @@ public class MyTcpServer {
 
             while (true){
                 Socket socket = serverSocket.accept();
-                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
                 String firstLine;
@@ -41,20 +40,26 @@ public class MyTcpServer {
                             logger.info("Mensagem post identificada");
                             //Lendo a terceira linha
                             String message = in.readLine();
-                            executor.execute(() -> postMessage(message, out));
+                            executor.execute(() -> {
+                                try {
+                                    postMessage(message, socket);
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            });
 
                         }else if (secondLine.equalsIgnoreCase("GET")){
                             logger.info("Mensagem get identificada");
                             executor.execute(() -> {
                                 try {
-                                    getMessages(out, socket);
+                                    getMessages(socket);
                                 } catch (IOException e) {
                                     throw new RuntimeException(e);
                                 }
                             });
 
                         }else{
-                            out.println("Método não permitido");
+                            socket.getOutputStream().write("Método não permitido".getBytes());
                         }
                     }
                 }
@@ -64,20 +69,17 @@ public class MyTcpServer {
         }
     }
 
-    private void getMessages(PrintWriter out, Socket socket) throws IOException {
+    private void getMessages(Socket socket) throws IOException {
         logger.info("Buscando mensagens");
         List<String> messages = db.getMessages();
         socket.getOutputStream().write(messages.toString().getBytes());
-//        socket.close();
-//        out.println(messages);
-//        out.flush();
-//        out.close();
+        socket.close();
     }
 
-    private void postMessage(String message, PrintWriter out){
+    private void postMessage(String message, Socket socket) throws IOException {
         db.postMessage(message);
-        out.println("Mensagem enviada com sucesso");
-        out.close();
+        socket.getOutputStream().write("Mensagem postada".getBytes());
+        socket.close();
     }
 
 

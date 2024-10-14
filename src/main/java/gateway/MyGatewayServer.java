@@ -1,6 +1,8 @@
 package gateway;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -12,9 +14,17 @@ public class MyGatewayServer {
     private static AtomicInteger requestCounter = new AtomicInteger(0);
     private static final ExecutorService executor = Executors.newCachedThreadPool();
     private static final byte[] buffer = new byte[1024];
-    private static final int GATEWAYPORT = 8081;
+    private static final int UDPGATEWAYPORT = 8081;
+    private static final int TCPGATEWAYPORT = 8082;
+    private static final int TCPSERVERGATEWAYPORT = 8083;
     private static final String[] UDPSERVERS = {
             "127.0.0.1",
+    };
+    private static final String[] TCPSERVERS = {
+            "127.0.0.1",
+    };
+    private static final int[] TCPPORTS = {
+            2346,
     };
     private static final int[] UDPPORTS = {
             2345,
@@ -22,7 +32,7 @@ public class MyGatewayServer {
 
     private static void runUdp(){
         try{
-            DatagramSocket socket = new DatagramSocket(GATEWAYPORT);
+            DatagramSocket socket = new DatagramSocket(UDPGATEWAYPORT);
             logger.info("#### Gateway UDP iniciado na porta: " + socket.getLocalPort() + "####");
 
             while(true){
@@ -43,8 +53,8 @@ public class MyGatewayServer {
     }
 
     private static void udpHandler(DatagramSocket socket, DatagramPacket receivedPacket){
-        int serverIndex = requestCounter.getAndIncrement() % UDPSERVERS.length;
-        String address = UDPSERVERS[serverIndex];
+        int serverIndex = requestCounter.getAndIncrement() % UDPPORTS.length;
+        String address = UDPSERVERS[0];
         int port = UDPPORTS[serverIndex];
         InetAddress receivedAddress = receivedPacket.getAddress();
         int receivedPort = receivedPacket.getPort();
@@ -73,16 +83,74 @@ public class MyGatewayServer {
     }
 
     private static void runTcp(){
+        try {
+            ServerSocket serverSocket = new ServerSocket(TCPGATEWAYPORT);
+            logger.info("#### Gateway TCP iniciado na porta: " + serverSocket.getLocalPort() + "####");
 
+
+            while (true) {
+                Socket clientSocket = serverSocket.accept();
+                logger.info("Conexão aceita");
+
+                executor.execute(() -> tcpHandler(clientSocket));
+
+            }
+        }catch (IOException e){
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    private static void tcpHandler(Socket clientSocket){
+        int serverIndex = requestCounter.getAndIncrement() % TCPPORTS.length;
+        String address = TCPSERVERS[0];
+        int port = TCPPORTS[serverIndex];
+
+        try(Socket serverSocket = new Socket(address, port);
+            InputStream clientInput = clientSocket.getInputStream();
+            OutputStream clientOutput = clientSocket.getOutputStream();
+            InputStream serverInput = serverSocket.getInputStream();
+            OutputStream serverOutput = serverSocket.getOutputStream();)
+        {
+            logger.info("Conexão com o servidor estabelecida");
+
+            try {
+                logger.info("Enviando dados do cliente para o servidor");
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+                bytesRead = clientInput.read(buffer);
+                String message = new String(buffer, 0, bytesRead);
+                logger.info("Mensagem do cliente: " + message);
+                serverOutput.write(buffer, 0, bytesRead);
+                serverOutput.flush();
+
+            } catch (IOException e) {
+                logger.severe("Erro ao enviar dados do cliente para o servidor: " + e.getMessage());
+            }
+
+            try {
+                logger.info("Enviando dados do servidor para o cliente");
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+                bytesRead = serverInput.read(buffer);
+                clientOutput.write(buffer, 0, bytesRead);
+                clientOutput.flush();
+
+            } catch (IOException e) {
+                logger.severe("Erro ao enviar dados do servidor para o cliente: " + e.getMessage());
+            }
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static void runServers(){
         logger.info("Executando servidores");
         new Thread(MyGatewayServer::runUdp).start();
-//        executor.submit(MyGatewayServer::runTcp);
+        new Thread(MyGatewayServer::runTcp).start();
 
     }
-
 
     public static void main(String[] args) throws SocketException {
         runServers();
