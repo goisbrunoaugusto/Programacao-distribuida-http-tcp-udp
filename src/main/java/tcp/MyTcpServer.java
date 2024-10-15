@@ -9,12 +9,17 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class MyTcpServer {
     private static final Logger logger = Logger.getLogger(MyTcpServer.class.getName());
     private static final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
     private final DatabasePersistance db = new DatabasePersistance();
+    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private static final String GATEWAY_ADDRESS = "127.0.0.1";
+    private static final int GATEWAY_PORT = 8082;
 
     public MyTcpServer() throws SQLException {
     }
@@ -23,6 +28,7 @@ public class MyTcpServer {
         try{
             ServerSocket serverSocket = new ServerSocket(Integer.parseInt(port));
             logger.info("##### Servidor iniciado na porta: " + port + " #####");
+            startHeartbeat(port);
 
             while (true){
                 Socket socket = serverSocket.accept();
@@ -82,6 +88,18 @@ public class MyTcpServer {
         socket.close();
     }
 
+    private void startHeartbeat(String port) {
+        scheduler.scheduleAtFixedRate(() -> {
+            try (Socket socket = new Socket(GATEWAY_ADDRESS, GATEWAY_PORT);
+                 OutputStream out = socket.getOutputStream()) {
+                String heartbeatMessage = "HEARTBEAT:" + port;
+                out.write(heartbeatMessage.getBytes());
+                out.flush();
+            } catch (IOException e) {
+                logger.severe("Erro ao enviar heartbeat: " + e.getMessage());
+            }
+        }, 0, 5, TimeUnit.SECONDS);
+    }
 
     public static void main(String[] args) throws SQLException {
         MyTcpServer server = new MyTcpServer();

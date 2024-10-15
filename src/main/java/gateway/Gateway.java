@@ -16,8 +16,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Gateway {
     private static final String[] SERVERS = {
             "http://localhost:1234",
-            "http://localhost:8082",
-            "http://localhost:8083"
+            "http://localhost:1235",
+            "http://localhost:1236",
+            "http://localhost:1237",
+            "http://localhost:1238"
     };
     private AtomicInteger requestCounter = new AtomicInteger(0);
     private HttpClient client = HttpClient.newHttpClient();
