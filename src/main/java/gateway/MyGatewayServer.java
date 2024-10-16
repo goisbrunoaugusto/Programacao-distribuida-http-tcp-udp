@@ -132,7 +132,6 @@ public class MyGatewayServer {
                 ArrayList<Integer> setList = new ArrayList<>(liveServersPorts);
                 logger.info("########## SERVIDORES NA LISTA" + setList);
                 port = setList.get(serverIndex);
-//                port = liveServersPorts.contains(candidatePort) ? candidatePort : TCP_PORTS[0];
                 logger.info("Enviando para o servidor na porta: " + port);
             }else if(liveServersPorts.size() == 0){
                 logger.severe("Nenhum servidor disponível");
@@ -176,6 +175,10 @@ public class MyGatewayServer {
 
             logger.info("liveServersPorts foi zerado");
         }, 0, 30, TimeUnit.SECONDS);
+    }
+
+    private static void clearServersAlive(){
+
     }
 
     public static void main(String[] args) throws SocketException {
