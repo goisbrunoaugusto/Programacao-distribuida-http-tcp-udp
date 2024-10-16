@@ -28,7 +28,7 @@ public class MyGatewayHttpServer {
     private void runHttpServer() throws IOException {
         System.out.println("Iniciando Gateway Server");
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
-        HttpContext context = server.createContext("/", new RequestHandler());
+        server.createContext("/", new RequestHandler());
         server.start();
     }
 
